@@ -1,54 +1,54 @@
-const http = require('http')
+const express = require('express')
+const dotenv = require('dotenv')
 
-const todos = [
-  { id: 1, text: 'todo 1' },
-  { id: 2, text: 'todo 2' },
-  { id: 3, text: 'todo 3' },
-]
+//load env variables
+dotenv.config({ path: './config/config.env' })
 
-const server = http.createServer((req, res, next) => {
-  // res.setHeader('Content-Type', 'application/json')
-  // res.setHeader('X-Powered-By', 'nodejs')
-  //   res.write('hello')
-  //   res.end()
+const app = express()
 
-  const { method, url } = req
-  //read header content
-  console.log(req.headers.authorization)
+//make routes
+app.get('/', (req, res) => {
+  //response html/string
+  //res.send('hello from express')
 
-  //body parser default nodejs
-  //init request
-  let body = []
-  req
-    .on('data', (chunk) => {
-      body.push(chunk)
-    })
-    .on('end', () => {
-      body = Buffer.concat(body).toString()
-      console.log(body)
-      let status = 404
-      const response = {
-        success: false,
-        data: null,
-        error: null,
-      }
+  //response json
+  //res.send({ name: 'adam' })
 
-      if (method === 'GET' && url === '/todos') {
-        status = 200
-        response.success = true
-        response.data = todos
-      } else if (method === 'POST' && url === '/todos') {
-        const { id, text } = JSON.parse(body)
+  //chaining response
+  res.status(200).json({ status: 'success', data: { id: 1 } })
+})
 
-        if (!id || !text) {
-          status = 400
-          response.error = 'please add text'
-        } else {
-          todos.push({ id, text })
-          status = 201
-          response.success = true
-          response.data = todos
-        }
+app.get('/api/v1/bootcamps', (req, res) => {
+  res.status(200).json({ status: 'success', msg: 'show all' })
+})
+
+app.get('/api/v1/bootcamps/:id', (req, res) => {
+  res
+    .status(200)
+    .json({ status: 'success', msg: `display bootcamp ${req.params.id}` })
+})
+
+app.post('/api/v1/bootcamps', (req, res) => {
+  res.status(200).json({ status: 'success', msg: 'created' })
+})
+
+app.put('/api/v1/bootcamps/:id', (req, res) => {
+  res
+    .status(200)
+    .json({ status: 'success', msg: `update bootcamp ${req.params.id}` })
+})
+
+app.delete('/api/v1/bootcamps/:id', (req, res) => {
+  res
+    .status(200)
+    .json({ status: 'success', msg: `delete bootcamp ${req.params.id}` })
+})
+
+const PORT = process.env.PORT || 5000
+app.listen(
+  PORT,
+  console.log(`running in ${process.env.NODE_ENV} mode on port ${PORT}`)
+)
       }
 
       //alternative to write header
