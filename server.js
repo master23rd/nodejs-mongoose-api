@@ -1,80 +1,18 @@
-const http = require('http')
+const express = require('express')
+const dotenv = require('dotenv')
 
-const todos = [
-  { id: 1, text: 'todo 1' },
-  { id: 2, text: 'todo 2' },
-  { id: 3, text: 'todo 3' },
-]
+//load env variables
+dotenv.config({ path: './config/config.env' })
 
-const server = http.createServer((req, res, next) => {
-  // res.setHeader('Content-Type', 'application/json')
-  // res.setHeader('X-Powered-By', 'nodejs')
-  //   res.write('hello')
-  //   res.end()
+const app = express()
 
-  const { method, url } = req
-  //read header content
-  console.log(req.headers.authorization)
-
-  //body parser default nodejs
-  //init request
-  let body = []
-  req
-    .on('data', (chunk) => {
-      body.push(chunk)
-    })
-    .on('end', () => {
-      body = Buffer.concat(body).toString()
-      console.log(body)
-      let status = 404
-      const response = {
-        success: false,
-        data: null,
-        error: null,
-      }
-
-      if (method === 'GET' && url === '/todos') {
-        status = 200
-        response.success = true
-        response.data = todos
-      } else if (method === 'POST' && url === '/todos') {
-        const { id, text } = JSON.parse(body)
-
-        if (!id || !text) {
-          status = 400
-          response.error = 'please add text'
-        } else {
-          todos.push({ id, text })
-          status = 201
-          response.success = true
-          response.data = todos
-        }
-      }
-
-      //alternative to write header
-      res.writeHead(status, {
-        'Content-Type': 'application/json',
-        'X-Powered-by': 'nodejs',
-      })
-
-      //response end
-      res.end(
-        JSON.stringify({
-          response,
-          //true
-          // success: true,
-          // data: todos,
-
-          //false used to be
-          // success: false,
-          // error: 'Not Found',
-          // data: null,
-        })
-      )
-    })
+//make routes
+app.get('/', (req, res) => {
+  res.send('hello from express')
 })
 
-//create port
-const PORT = 5000
-//make server run
-server.listen(PORT, () => console.log(`server running on port ${PORT}`))
+const PORT = process.env.PORT || 5000
+app.listen(
+  PORT,
+  console.log(`running in ${process.env.NODE_ENV} mode on port ${PORT}`)
+)
