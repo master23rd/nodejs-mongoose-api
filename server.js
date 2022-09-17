@@ -1,80 +1,51 @@
 const express = require('express')
-const dotenv = require('dotenv')
+const dotenv = require('dotenv') //for env config
+const morgan = require('morgan') //for log
+const colors = require('colors') //cl colors
+const bodyParser = require('body-parser')
+const errorHandler = require('./middleware/error')
+const connectDB = require('./config/db')
 
 //load env variables
 dotenv.config({ path: './config/config.env' })
 
+//log middleware >> replace use morgan
+//const logger = require('./middleware/logger')
+
+connectDB()
+
+//routes files
+const bootcamps = require('./routes/bootcamps')
+
+//make variable express
 const app = express()
 
-//make routes
-app.get('/', (req, res) => {
-  //response html/string
-  //res.send('hello from express')
+//body parser
+app.use(bodyParser.json())
 
-  //response json
-  //res.send({ name: 'adam' })
+//dev logging middleware (using morgan)
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'))
+}
 
-  //chaining response
-  res.status(200).json({ status: 'success', data: { id: 1 } })
-})
+//define middleware (manually)
+//app.use(logger)
 
-app.get('/api/v1/bootcamps', (req, res) => {
-  res.status(200).json({ status: 'success', msg: 'show all' })
-})
+//mount router
+app.use('/api/v1/bootcamps', bootcamps)
 
-app.get('/api/v1/bootcamps/:id', (req, res) => {
-  res
-    .status(200)
-    .json({ status: 'success', msg: `display bootcamp ${req.params.id}` })
-})
-
-app.post('/api/v1/bootcamps', (req, res) => {
-  res.status(200).json({ status: 'success', msg: 'created' })
-})
-
-app.put('/api/v1/bootcamps/:id', (req, res) => {
-  res
-    .status(200)
-    .json({ status: 'success', msg: `update bootcamp ${req.params.id}` })
-})
-
-app.delete('/api/v1/bootcamps/:id', (req, res) => {
-  res
-    .status(200)
-    .json({ status: 'success', msg: `delete bootcamp ${req.params.id}` })
-})
+//error response middleware - trigger by next
+app.use(errorHandler)
 
 const PORT = process.env.PORT || 5000
-app.listen(
+const server = app.listen(
   PORT,
-  console.log(`running in ${process.env.NODE_ENV} mode on port ${PORT}`)
+  console.log(
+    `running in ${process.env.NODE_ENV} mode on port ${PORT}`.yellow.bold
+  )
 )
-      }
 
-      //alternative to write header
-      res.writeHead(status, {
-        'Content-Type': 'application/json',
-        'X-Powered-by': 'nodejs',
-      })
-
-      //response end
-      res.end(
-        JSON.stringify({
-          response,
-          //true
-          // success: true,
-          // data: todos,
-
-          //false used to be
-          // success: false,
-          // error: 'Not Found',
-          // data: null,
-        })
-      )
-    })
+process.on('unhandledRejection', (err, promise) => {
+  console.log(`Error: ${err.message}`.red)
+  server.close(() => process.exit(1))
 })
-
-//create port
-const PORT = 5000
-//make server run
-server.listen(PORT, () => console.log(`server running on port ${PORT}`))
