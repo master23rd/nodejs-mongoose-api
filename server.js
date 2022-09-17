@@ -24,6 +24,7 @@ const app = express()
 app.use(bodyParser.json())
 
 //dev logging middleware (using morgan)
+// help to logging error or request process capturize - req.method} ${req.protocol}
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'))
 }
