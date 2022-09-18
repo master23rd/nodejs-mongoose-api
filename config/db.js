@@ -6,6 +6,7 @@ const connectDB = async () => {
 
   //async await method
   const conn = await mongoose.connect(process.env.MONGO_URI)
+  // old version mongoose
   //   const conn = await mongoose.connect(process.env.MONGO_URI, {
   //     useNewUrlParser: true,
   //     useCreateIndex: true,
