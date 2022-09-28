@@ -7,10 +7,82 @@ const Bootcamp = require('../models/Bootcamp')
 // @routes  GET /api/v1/bootcamps
 // @access  Public
 exports.getBootcamps = asyncHandler(async (req, res, next) => {
-  const bootcamps = await Bootcamp.find()
-  res
-    .status(200)
-    .json({ status: 'success', count: bootcamps.length, data: bootcamps })
+  console.log(req.query)
+
+  // copy req. query to new object
+  const reqQuery = { ...req.query }
+  console.log(reqQuery)
+
+  //exclude fields
+  const removeFields = ['select', 'sort', 'page', 'limit']
+
+  //loop over removeFields and delete from queryStr
+  removeFields.forEach((param) => delete reqQuery[param])
+
+  //create query string
+  let queryStr = JSON.stringify(reqQuery)
+  console.log(queryStr)
+
+  //create operator gt, gte, lt etc
+  queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, (match) => `$${match}`)
+  console.log(`result : ${queryStr}`)
+
+  //using mongodb string find query find({ "averageCost" : {"$lte": "1000"}, "location.city": "boston" "})
+  query = Bootcamp.find(JSON.parse(queryStr))
+
+  //select process
+  if (req.query.select) {
+    const fields = req.query.select.split(',').join(' ')
+    console.log(fields) // "name description" sintaks for mongoose query
+
+    query = query.select(fields)
+  }
+
+  //sortby or default(using date)
+  if (req.query.sort) {
+    const sortBy = req.query.sort.split(',').join(' ')
+    query = query.sort(sortBy) //default ascending
+  } else {
+    query = query.sort('-createdAt') // descending
+  }
+
+  const page = parseInt(req.query.page, 10) || 1 //selected page
+  const limit = parseInt(req.query.limit, 10) || 25 //show n-th items
+  const startIndex = (page - 1) * limit //skip several items , ex. page 2 will start from 6th item.
+  const endIndex = page * limit //last index of total item fetch
+  const total = await Bootcamp.countDocuments() //total document to fetch
+
+  //pagination skip and limit function
+  query = query.skip(startIndex).limit(limit)
+
+  //execute query
+  const bootcamps = await query
+
+  const pagination = {}
+
+  //if last index item (in page) less then total - still have amount
+  if (endIndex < total) {
+    pagination.next = {
+      page: page + 1,
+      limit: limit,
+    }
+  }
+
+  //if startIndex in page 1 or begin indexing
+  if (startIndex > 0) {
+    pagination.prev = {
+      page: page - 1,
+      limit,
+    }
+  }
+
+  //const bootcamps = await Bootcamp.find(req.query)
+  res.status(200).json({
+    status: 'success',
+    count: bootcamps.length,
+    pagination,
+    data: bootcamps,
+  })
 })
 
 // @desc    get single bootcamps
@@ -71,7 +143,7 @@ exports.deleteBootcamp = asyncHandler(async (req, res, next) => {
   res.status(200).json({ success: true, data: {}, msg: 'bootcamp has deleted' })
 })
 
-// @desc    Get bootcamps within radius
+// @desc    Get bootcamps within radius and zipcode (you can change to lng-lat)
 // @routes  GET /api/v1/bootcamps/radius/:zipcode/:distance /:type (distance type ex. mil, km)
 // @access  private
 exports.getBootcampInRadius = asyncHandler(async (req, res, next) => {
@@ -86,6 +158,7 @@ exports.getBootcampInRadius = asyncHandler(async (req, res, next) => {
   //calc radius using radians
   // devide distance by radius of earth
   // earth radius = 3,963 in mill ||  6,378 km
+  //using mile
   const radius = distance / 3963
 
   const bootcamps = await Bootcamp.find({
