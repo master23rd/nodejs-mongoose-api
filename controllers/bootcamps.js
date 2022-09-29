@@ -28,7 +28,7 @@ exports.getBootcamps = asyncHandler(async (req, res, next) => {
   console.log(`result : ${queryStr}`)
 
   //using mongodb string find query find({ "averageCost" : {"$lte": "1000"}, "location.city": "boston" "})
-  query = Bootcamp.find(JSON.parse(queryStr))
+  query = Bootcamp.find(JSON.parse(queryStr)).populate('courses')
 
   //select process
   if (req.query.select) {
@@ -136,9 +136,13 @@ exports.updateBootcamp = asyncHandler(async (req, res, next) => {
 // @routes  DEL /api/v1/bootcamps/:id
 // @access  private
 exports.deleteBootcamp = asyncHandler(async (req, res, next) => {
-  const bootcamp = await Bootcamp.findByIdAndDelete(req.params.id)
+  // const bootcamp = await Bootcamp.findByIdAndDelete(req.params.id)
+  const bootcamp = await Bootcamp.findById(req.params.id)
 
   if (!bootcamp) throw new Error()
+
+  //trigger hooks pre
+  bootcamp.remove()
 
   res.status(200).json({ success: true, data: {}, msg: 'bootcamp has deleted' })
 })
