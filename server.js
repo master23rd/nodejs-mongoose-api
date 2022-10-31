@@ -1,8 +1,10 @@
-const express = require('express')
+const path = require('path')
+const express = require('express') // express lib
 const dotenv = require('dotenv') //for env config
 const morgan = require('morgan') //for log
 const colors = require('colors') //cl colors
-const bodyParser = require('body-parser')
+const fileupload = require('express-fileupload') //upload file
+const bodyParser = require('body-parser') //for parsing body request
 const errorHandler = require('./middleware/error')
 const connectDB = require('./config/db')
 
@@ -30,6 +32,10 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'))
 }
 
+// mount express file upload
+app.use(fileupload())
+app.use(express.static(path.join(__dirname, 'public')))
+
 //define middleware (manually)
 //app.use(logger)
 
@@ -48,6 +54,7 @@ const server = app.listen(
   )
 )
 
+// read cycle process on, promise to handle reject
 process.on('unhandledRejection', (err, promise) => {
   console.log(`Error: ${err.message}`.red)
   server.close(() => process.exit(1))
