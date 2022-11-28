@@ -16,23 +16,33 @@ const advancedResults = require('../middleware/advancedResults')
 
 //resource route
 const courseRouter = require('./courses')
+const reviewRouter = require('./review')
 
 const router = express.Router()
 
+//add middleware auth
+const { protect, authorize } = require('../middleware/auth')
+
 //reroute to resources
 router.use('/:bootcampId/courses', courseRouter)
+router.use('/:bootcampId/reviews', reviewRouter)
 
 /** static middleware */
 // router.route('/').get(getBootcamps).post(createBootcamp)
 router.route('/radius/:zipcode/:distance').get(getBootcampInRadius)
 router.route('/:id/photo').put(bootcampPhotoUpload)
-router.route('/:id').get(getBootcamp).put(updateBootcamp).delete(deleteBootcamp)
 
 /** advanced middleware - fetch data dynamicly */
 router
   .route('/')
   .get(advancedResults(Bootcamp, 'courses'), getBootcamps)
-  .post(createBootcamp)
+  .post(protect, authorize('publisher', 'admin'), createBootcamp)
+
+router
+  .route('/:id')
+  .get(getBootcamp)
+  .put(protect, authorize('publisher', 'admin'), updateBootcamp)
+  .delete(protect, authorize('publisher', 'admin'), deleteBootcamp)
 
 // routes single path
 // router.get('/', getBootcamps)
