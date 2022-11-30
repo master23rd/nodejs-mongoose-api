@@ -11,7 +11,8 @@ const errorHandler = (err, req, res, next) => {
   //detect specific error
   //mongoose error for bad object Id
   if (err.name === 'CastError') {
-    const message = `Resource not found with ID of ${err.value}`
+    // const message = `Resource not found with ID of ${err.value}`
+    const message = `Resource not found`
     error = new ErrorResponse(message, 404)
   }
   //mongoose error duplicate data
